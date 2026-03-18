@@ -1,0 +1,55 @@
+.zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2.5px dashed #90aac8;
+  border-radius: 12px;
+  padding: 48px 32px;
+  cursor: pointer;
+  background: #f7fafd;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+
+.zone:hover,
+.zone:focus {
+  border-color: #1a3c5e;
+  background: #eef4fb;
+  outline: none;
+}
+
+.dragging {
+  border-color: #1a3c5e;
+  background: #ddeaf7;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.primary {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a3c5e;
+  margin: 0;
+}
+
+.secondary {
+  font-size: 0.875rem;
+  color: #555;
+  margin: 0;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 4px;
+}

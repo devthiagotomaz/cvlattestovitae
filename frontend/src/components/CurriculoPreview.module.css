@@ -1,0 +1,158 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profileHeader {
+  background: linear-gradient(135deg, #1a3c5e 0%, #2b5a8a 100%);
+  color: #fff;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #c8daec;
+}
+
+.lattesTag {
+  background: rgba(255,255,255,0.18);
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.institution {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #d8e8f5;
+}
+
+.summary {
+  font-size: 0.87rem;
+  color: #333;
+  line-height: 1.6;
+  text-align: justify;
+}
+
+.entry {
+  padding: 10px 0;
+  border-bottom: 1px dotted #ddd;
+}
+
+.entry:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.entryHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.entryTitle {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 0.9rem;
+}
+
+.entryInstitution {
+  font-size: 0.85rem;
+  color: #444;
+  margin-top: 2px;
+}
+
+.entryMeta {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.entryDesc {
+  font-size: 0.82rem;
+  color: #555;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.badge {
+  display: inline-block;
+  background: #e8eef4;
+  color: #1a3c5e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.numBadge {
+  display: inline-block;
+  background: #1a3c5e;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+
+.doi {
+  font-size: 0.75rem;
+  color: #0057a8;
+  margin-top: 2px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tag {
+  background: #f0f4f8;
+  border: 1px solid #cdd7e2;
+  color: #1a3c5e;
+  font-size: 0.75rem;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.idiomaGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.idiomaRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.idiomaRow strong {
+  min-width: 100px;
+  color: #1a3c5e;
+}
+
+.idiomaRow span {
+  color: #555;
+}

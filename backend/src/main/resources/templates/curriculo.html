@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xml:lang="pt-BR" lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${curriculo.nomeCompleto}">Currículo Vitae</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 20mm 18mm 20mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a1a;
+            line-height: 1.45;
+        }
+
+        /* ---- HEADER ---- */
+        .cv-header {
+            border-bottom: 3px solid #1a3c5e;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+
+        .cv-name {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #1a3c5e;
+            letter-spacing: 0.5px;
+        }
+
+        .cv-subtitle {
+            font-size: 9pt;
+            color: #555;
+            margin-top: 3px;
+        }
+
+        .cv-contact {
+            font-size: 8.5pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        .cv-contact span {
+            margin-right: 14px;
+        }
+
+        /* ---- LATTES ID BADGE ---- */
+        .lattes-badge {
+            display: inline-block;
+            background: #1a3c5e;
+            color: #fff;
+            font-size: 7.5pt;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+
+        /* ---- SECTION ---- */
+        .section {
+            margin-top: 14px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #1a3c5e;
+            border-bottom: 1.5px solid #1a3c5e;
+            padding-bottom: 2px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* ---- ENTRY ROW ---- */
+        .entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .entry:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .entry-title {
+            font-weight: bold;
+            color: #222;
+            font-size: 10pt;
+        }
+
+        .entry-subtitle {
+            color: #444;
+            font-size: 9.5pt;
+        }
+
+        .entry-meta {
+            color: #666;
+            font-size: 8.5pt;
+            margin-top: 1px;
+        }
+
+        .entry-desc {
+            color: #333;
+            font-size: 9pt;
+            margin-top: 3px;
+            font-style: italic;
+        }
+
+        /* ---- BADGE TIPO ---- */
+        .badge {
+            display: inline-block;
+            background: #e8eef4;
+            color: #1a3c5e;
+            font-size: 7.5pt;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        /* ---- RESUMO ---- */
+        .resumo-text {
+            font-size: 9.5pt;
+            color: #333;
+            text-align: justify;
+            line-height: 1.55;
+        }
+
+        /* ---- TAGS (áreas, idiomas) ---- */
+        .tag-list {
+            margin-top: 2px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #f0f4f8;
+            border: 1px solid #cdd7e2;
+            color: #1a3c5e;
+            font-size: 8pt;
+            padding: 1px 7px;
+            border-radius: 10px;
+            margin: 2px 3px 2px 0;
+        }
+
+        /* ---- DOI ---- */
+        .doi {
+            font-size: 8pt;
+            color: #0057a8;
+        }
+
+        /* ---- PRINT HELPERS ---- */
+        .page-break {
+            page-break-before: always;
+        }
+
+        table.info-table {
+            width: 100%;
+            font-size: 9pt;
+            border-collapse: collapse;
+        }
+
+        table.info-table td {
+            padding: 2px 6px;
+            vertical-align: top;
+        }
+
+        table.info-table td.label {
+            font-weight: bold;
+            color: #444;
+            width: 30%;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== CABEÇALHO ===== -->
+<div class="cv-header">
+    <div class="cv-name" th:text="${curriculo.nomeCompleto}">Nome Completo</div>
+    <div class="cv-subtitle">
+        <span th:if="${curriculo.nomeCitacoes != null and !#strings.isEmpty(curriculo.nomeCitacoes)}">
+            Citações: <strong th:text="${curriculo.nomeCitacoes}"></strong>
+        </span>
+        <span th:if="${curriculo.orcid != null and !#strings.isEmpty(curriculo.orcid)}">
+            &nbsp;|&nbsp; ORCID: <strong th:text="${curriculo.orcid}"></strong>
+        </span>
+    </div>
+    <div class="cv-contact">
+        <span th:if="${curriculo.lattesId != null and !#strings.isEmpty(curriculo.lattesId)}">
+            <span class="lattes-badge">Lattes</span>
+            <span th:text="${curriculo.lattesId}"></span>
+        </span>
+        <span th:if="${curriculo.email != null and !#strings.isEmpty(curriculo.email)}">
+            ✉ <span th:text="${curriculo.email}"></span>
+        </span>
+        <span th:if="${curriculo.homePage != null and !#strings.isEmpty(curriculo.homePage)}">
+            &nbsp;| <span th:text="${curriculo.homePage}"></span>
+        </span>
+        <span th:if="${curriculo.cidadeEndereco != null and !#strings.isEmpty(curriculo.cidadeEndereco)}">
+            &nbsp;|
+            <span th:text="${curriculo.nomeInstituicaoEndereco}"></span>
+            <span th:if="${curriculo.cidadeEndereco != null}">,
+                <span th:text="${curriculo.cidadeEndereco}"></span>
+                - <span th:text="${curriculo.ufEndereco}"></span>
+            </span>
+        </span>
+    </div>
+</div>
+
+<!-- ===== RESUMO ===== -->
+<div class="section" th:if="${curriculo.resumo != null and !#strings.isEmpty(curriculo.resumo)}">
+    <div class="section-title">Resumo</div>
+    <p class="resumo-text" th:text="${curriculo.resumo}"></p>
+</div>
+
+<!-- ===== ÁREAS DE ATUAÇÃO ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.areasAtuacao)}">
+    <div class="section-title">Áreas de Atuação</div>
+    <div class="tag-list">
+        <th:block th:each="area : ${curriculo.areasAtuacao}">
+            <span class="tag" th:text="${area.grandeArea}
+                + (${area.area != null and !#strings.isEmpty(area.area)} ? ' › ' + ${area.area} : '')
+                + (${area.subArea != null and !#strings.isEmpty(area.subArea)} ? ' › ' + ${area.subArea} : '')
+                + (${area.especialidade != null and !#strings.isEmpty(area.especialidade)} ? ' › ' + ${area.especialidade} : '')">
+            </span>
+        </th:block>
+    </div>
+</div>
+
+<!-- ===== FORMAÇÃO ACADÊMICA ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.formacoes)}">
+    <div class="section-title">Formação Acadêmica</div>
+    <div th:each="f : ${curriculo.formacoes}" class="entry">
+        <div>
+            <span class="badge" th:text="${f.tipo}"></span>
+            <span class="entry-title" th:text="${f.nomeCurso}"></span>
+        </div>
+        <div class="entry-subtitle" th:text="${f.nomeInstituicao}"></div>
+        <div class="entry-meta">
+            <span th:if="${f.anoInicio != null and !#strings.isEmpty(f.anoInicio)}"
+                  th:text="${f.anoInicio + ' – ' + (f.anoConclusao != null and !#strings.isEmpty(f.anoConclusao) ? f.anoConclusao : 'Atual')}">
+            </span>
+            <span th:if="${f.statusCurso == 'EM_ANDAMENTO'}"> &nbsp;(Em andamento)</span>
+        </div>
+        <div class="entry-desc"
+             th:if="${f.tituloDissertacao != null and !#strings.isEmpty(f.tituloDissertacao)}">
+            <strong>Título:</strong> <span th:text="${f.tituloDissertacao}"></span>
+        </div>
+        <div class="entry-meta"
+             th:if="${f.nomeOrientador != null and !#strings.isEmpty(f.nomeOrientador)}">
+            <strong>Orientador(a):</strong> <span th:text="${f.nomeOrientador}"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== FORMAÇÃO COMPLEMENTAR ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.formacoesComplementares)}">
+    <div class="section-title">Formação Complementar</div>
+    <div th:each="fc : ${curriculo.formacoesComplementares}" class="entry">
+        <div>
+            <span class="badge" th:text="${fc.tipo}"></span>
+            <span class="entry-title" th:text="${fc.nomeCurso}"></span>
+        </div>
+        <div class="entry-subtitle" th:text="${fc.nomeInstituicao}"></div>
+        <div class="entry-meta">
+            <span th:text="${fc.anoInicio + (fc.anoConclusao != null and !#strings.isEmpty(fc.anoConclusao) ? ' – ' + fc.anoConclusao : '')}"></span>
+            <span th:if="${fc.cargaHoraria != null and !#strings.isEmpty(fc.cargaHoraria)}">
+                &nbsp;| <span th:text="${fc.cargaHoraria + 'h'}"></span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== EXPERIÊNCIA PROFISSIONAL ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.atuacoes)}">
+    <div class="section-title">Experiência Profissional</div>
+    <div th:each="a : ${curriculo.atuacoes}" class="entry">
+        <div class="entry-title" th:text="${a.nomeInstituicao}"></div>
+        <div class="entry-subtitle" th:text="${a.tipoVinculo}"></div>
+        <div class="entry-meta">
+            <span th:if="${a.anoInicio != null and !#strings.isEmpty(a.anoInicio)}"
+                  th:text="'Início: ' + ${a.mesInicio != null and !#strings.isEmpty(a.mesInicio) ? a.mesInicio + '/' : ''} + ${a.anoInicio}">
+            </span>
+            <span th:if="${a.anoFim != null and !#strings.isEmpty(a.anoFim)}"
+                  th:text="' – ' + ${a.mesFim != null and !#strings.isEmpty(a.mesFim) ? a.mesFim + '/' : ''} + ${a.anoFim}">
+            </span>
+            <span th:if="${a.anoFim == null or #strings.isEmpty(a.anoFim)}"> – Atual</span>
+        </div>
+        <div class="entry-desc"
+             th:if="${a.descricao != null and !#strings.isEmpty(a.descricao)}"
+             th:text="${a.descricao}">
+        </div>
+    </div>
+</div>
+
+<!-- ===== PUBLICAÇÕES — ARTIGOS ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.artigosPublicados)}">
+    <div class="section-title">Artigos Publicados</div>
+    <div th:each="pub, iter : ${curriculo.artigosPublicados}" class="entry">
+        <div>
+            <span class="badge" th:text="${iter.index + 1}"></span>
+            <span class="entry-title" th:text="${pub.titulo}"></span>
+        </div>
+        <div class="entry-subtitle" th:if="${pub.autores != null and !#strings.isEmpty(pub.autores)}"
+             th:text="${pub.autores}">
+        </div>
+        <div class="entry-meta">
+            <span th:if="${pub.veiculo != null and !#strings.isEmpty(pub.veiculo)}"
+                  th:text="'Periódico: ' + ${pub.veiculo}">
+            </span>
+            <span th:if="${pub.volume != null and !#strings.isEmpty(pub.volume)}"
+                  th:text="' | v.' + ${pub.volume}">
+            </span>
+            <span th:if="${pub.numero != null and !#strings.isEmpty(pub.numero)}"
+                  th:text="', n.' + ${pub.numero}">
+            </span>
+            <span th:if="${pub.paginas != null and !#strings.isEmpty(pub.paginas)}"
+                  th:text="', p.' + ${pub.paginas}">
+            </span>
+            <span th:if="${pub.ano != null and !#strings.isEmpty(pub.ano)}"
+                  th:text="' (' + ${pub.ano} + ')'">
+            </span>
+        </div>
+        <div class="doi" th:if="${pub.doi != null and !#strings.isEmpty(pub.doi)}"
+             th:text="'DOI: ' + ${pub.doi}">
+        </div>
+    </div>
+</div>
+
+<!-- ===== PUBLICAÇÕES — LIVROS ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.livros)}">
+    <div class="section-title">Livros Publicados / Organizados</div>
+    <div th:each="pub, iter : ${curriculo.livros}" class="entry">
+        <div>
+            <span class="badge" th:text="${iter.index + 1}"></span>
+            <span class="entry-title" th:text="${pub.titulo}"></span>
+        </div>
+        <div class="entry-subtitle" th:text="${pub.autores}"></div>
+        <div class="entry-meta">
+            <span th:if="${pub.editora != null and !#strings.isEmpty(pub.editora)}"
+                  th:text="${pub.editora}">
+            </span>
+            <span th:if="${pub.cidade != null and !#strings.isEmpty(pub.cidade)}"
+                  th:text="', ' + ${pub.cidade}">
+            </span>
+            <span th:if="${pub.ano != null and !#strings.isEmpty(pub.ano)}"
+                  th:text="' (' + ${pub.ano} + ')'">
+            </span>
+        </div>
+        <div class="doi" th:if="${pub.doi != null and !#strings.isEmpty(pub.doi)}"
+             th:text="'DOI: ' + ${pub.doi}">
+        </div>
+    </div>
+</div>
+
+<!-- ===== PUBLICAÇÕES — CAPÍTULOS ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.capitulosLivro)}">
+    <div class="section-title">Capítulos de Livros</div>
+    <div th:each="pub, iter : ${curriculo.capitulosLivro}" class="entry">
+        <div>
+            <span class="badge" th:text="${iter.index + 1}"></span>
+            <span class="entry-title" th:text="${pub.titulo}"></span>
+        </div>
+        <div class="entry-subtitle" th:text="${pub.autores}"></div>
+        <div class="entry-meta">
+            <span th:if="${pub.veiculo != null and !#strings.isEmpty(pub.veiculo)}"
+                  th:text="'In: ' + ${pub.veiculo}">
+            </span>
+            <span th:if="${pub.editora != null and !#strings.isEmpty(pub.editora)}"
+                  th:text="'. ' + ${pub.editora}">
+            </span>
+            <span th:if="${pub.paginas != null and !#strings.isEmpty(pub.paginas)}"
+                  th:text="', p.' + ${pub.paginas}">
+            </span>
+            <span th:if="${pub.ano != null and !#strings.isEmpty(pub.ano)}"
+                  th:text="' (' + ${pub.ano} + ')'">
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PROJETOS DE PESQUISA ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.projetos)}">
+    <div class="section-title">Projetos de Pesquisa</div>
+    <div th:each="proj : ${curriculo.projetos}" class="entry">
+        <div class="entry-title" th:text="${proj.titulo}"></div>
+        <div class="entry-subtitle"
+             th:if="${proj.nomeOrgao != null and !#strings.isEmpty(proj.nomeOrgao)}"
+             th:text="${proj.nomeOrgao}">
+        </div>
+        <div class="entry-meta">
+            <span th:if="${proj.anoInicio != null and !#strings.isEmpty(proj.anoInicio)}"
+                  th:text="${proj.anoInicio + (proj.anoFim != null and !#strings.isEmpty(proj.anoFim) ? ' – ' + proj.anoFim : ' – Atual')}">
+            </span>
+            <span th:if="${proj.situacao != null and !#strings.isEmpty(proj.situacao)}"
+                  th:text="' | ' + ${proj.situacao}">
+            </span>
+        </div>
+        <div class="entry-desc"
+             th:if="${proj.descricao != null and !#strings.isEmpty(proj.descricao)}"
+             th:text="${proj.descricao}">
+        </div>
+        <div th:if="${!#lists.isEmpty(proj.linhasPesquisa)}" class="tag-list">
+            <span th:each="linha : ${proj.linhasPesquisa}" class="tag" th:text="${linha}"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ORIENTAÇÕES ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.orientacoes)}">
+    <div class="section-title">Orientações</div>
+    <div th:each="o : ${curriculo.orientacoes}" class="entry">
+        <div>
+            <span class="badge" th:text="${o.tipo}"></span>
+            <span class="entry-title" th:text="${o.titulo}"></span>
+        </div>
+        <div class="entry-subtitle"
+             th:if="${o.nomeOrientando != null and !#strings.isEmpty(o.nomeOrientando)}"
+             th:text="'Orientando(a): ' + ${o.nomeOrientando}">
+        </div>
+        <div class="entry-meta">
+            <span th:if="${o.nomeInstituicao != null and !#strings.isEmpty(o.nomeInstituicao)}"
+                  th:text="${o.nomeInstituicao}">
+            </span>
+            <span th:if="${o.anoConclusao != null and !#strings.isEmpty(o.anoConclusao)}"
+                  th:text="' (' + ${o.anoConclusao} + ')'">
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PRÊMIOS E DISTINÇÕES ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.premios)}">
+    <div class="section-title">Prêmios e Distinções</div>
+    <div th:each="p : ${curriculo.premios}" class="entry">
+        <div class="entry-title" th:text="${p.nome}"></div>
+        <div class="entry-subtitle" th:text="${p.entidade}"></div>
+        <div class="entry-meta" th:text="${p.ano}"></div>
+    </div>
+</div>
+
+<!-- ===== IDIOMAS ===== -->
+<div class="section" th:if="${!#lists.isEmpty(curriculo.idiomas)}">
+    <div class="section-title">Idiomas</div>
+    <div th:each="id : ${curriculo.idiomas}" class="entry">
+        <table class="info-table">
+            <tr>
+                <td class="label" th:text="${id.nome}"></td>
+                <td>
+                    <span th:if="${id.proficienciaLeitura != null and !#strings.isEmpty(id.proficienciaLeitura)}">
+                        Leitura: <strong th:text="${id.proficienciaLeitura}"></strong>
+                    </span>
+                    <span th:if="${id.proficienciaEscrita != null and !#strings.isEmpty(id.proficienciaEscrita)}">
+                        &nbsp;| Escrita: <strong th:text="${id.proficienciaEscrita}"></strong>
+                    </span>
+                    <span th:if="${id.proficienciaConversacao != null and !#strings.isEmpty(id.proficienciaConversacao)}">
+                        &nbsp;| Fala: <strong th:text="${id.proficienciaConversacao}"></strong>
+                    </span>
+                    <span th:if="${id.proficienciaCompreensao != null and !#strings.isEmpty(id.proficienciaCompreensao)}">
+                        &nbsp;| Compreensão: <strong th:text="${id.proficienciaCompreensao}"></strong>
+                    </span>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- ===== RODAPÉ ===== -->
+<div style="margin-top:20px; border-top:1px solid #ccc; padding-top:5px; font-size:7.5pt; color:#999; text-align:center;">
+    Currículo gerado a partir da Plataforma Lattes (CNPq)
+    <span th:if="${curriculo.lattesId != null and !#strings.isEmpty(curriculo.lattesId)}">
+        — ID Lattes: <span th:text="${curriculo.lattesId}"></span>
+    </span>
+</div>
+
+</body>
+</html>
