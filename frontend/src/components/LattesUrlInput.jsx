@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react'
 import styles from './LattesUrlInput.module.css'
 
 const LATTES_DOMAIN = 'lattes.cnpq.br'
+const BUSCATEXTUAL_DOMAIN = 'buscatextual.cnpq.br'
 
 function isValidLattesUrl(url) {
   try {
     const parsed = new URL(url.trim())
-    return parsed.hostname.endsWith(LATTES_DOMAIN)
+    return parsed.hostname.endsWith(LATTES_DOMAIN) || parsed.hostname.endsWith(BUSCATEXTUAL_DOMAIN)
   } catch {
     return false
   }
@@ -34,8 +35,8 @@ export default function LattesUrlInput({ onUrlSubmit, disabled }) {
     }
     if (!isValidLattesUrl(trimmed)) {
       setValidationError(
-        `URL inválida. A URL deve pertencer ao domínio ${LATTES_DOMAIN} ` +
-        '(ex: http://lattes.cnpq.br/1234567890123456).'
+        `URL inválida. A URL deve pertencer ao domínio ${LATTES_DOMAIN} ou ${BUSCATEXTUAL_DOMAIN} ` +
+        `(ex: http://lattes.cnpq.br/1234567890123456 ou https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=XXXXXXXXXXXXXXXX).`
       )
       return
     }
@@ -53,7 +54,7 @@ export default function LattesUrlInput({ onUrlSubmit, disabled }) {
           id="lattes-url"
           type="url"
           className={`${styles.input} ${validationError ? styles.inputError : ''}`}
-          placeholder="http://lattes.cnpq.br/1234567890123456"
+          placeholder="https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=XXXXXXXXXXXXXXXX"
           value={url}
           onChange={handleChange}
           disabled={disabled}
