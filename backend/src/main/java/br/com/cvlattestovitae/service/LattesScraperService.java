@@ -17,16 +17,17 @@ import java.util.List;
 public class LattesScraperService {
 
     private static final String ALLOWED_HOST = "lattes.cnpq.br";
+    private static final String ALLOWED_HOST_ALT = "buscatextual.cnpq.br";
     private static final String USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     + "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     private static final int TIMEOUT_MS = 30_000;
 
     /**
-     * Validates that the supplied URL belongs to the allowed Lattes domain.
+     * Validates that the supplied URL belongs to one of the allowed Lattes domains.
      *
      * @param url the URL to validate
-     * @throws IllegalArgumentException when the URL is blank, malformed, or not from lattes.cnpq.br
+     * @throws IllegalArgumentException when the URL is blank, malformed, or not from lattes.cnpq.br or buscatextual.cnpq.br
      */
     public void validateUrl(String url) {
         if (url == null || url.isBlank()) {
@@ -35,9 +36,11 @@ public class LattesScraperService {
         try {
             URI uri = new URI(url.trim());
             String host = uri.getHost();
-            if (host == null || !host.toLowerCase().endsWith(ALLOWED_HOST)) {
+            if (host == null
+                    || (!host.toLowerCase().endsWith(ALLOWED_HOST)
+                            && !host.toLowerCase().endsWith(ALLOWED_HOST_ALT))) {
                 throw new IllegalArgumentException(
-                        "URL inválida. Apenas URLs do domínio lattes.cnpq.br são aceitas.");
+                        "URL inválida. Apenas URLs dos domínios lattes.cnpq.br ou buscatextual.cnpq.br são aceitas.");
             }
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("URL malformada: " + e.getMessage());
@@ -48,7 +51,7 @@ public class LattesScraperService {
      * Fetches the public Lattes curriculum page and maps the HTML content to
      * a {@link Curriculo} object.
      *
-     * @param url public Lattes profile URL (must be from lattes.cnpq.br)
+     * @param url public Lattes profile URL (must be from lattes.cnpq.br or buscatextual.cnpq.br)
      * @return populated {@link Curriculo}
      * @throws IllegalArgumentException for invalid / disallowed URLs
      * @throws IOException              when the page cannot be fetched
