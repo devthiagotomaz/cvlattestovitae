@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
-import UploadZone from './components/UploadZone'
-import CurriculoPreview from './components/CurriculoPreview'
-import LattesUrlInput from './components/LattesUrlInput'
+import { useState, useCallback } from "react";
+import UploadZone from "./components/UploadZone";
+import CurriculoPreview from "./components/CurriculoPreview";
+import LattesUrlInput from "./components/LattesUrlInput";
 import {
   parseCurriculo,
   convertAndDownload,
@@ -9,121 +9,134 @@ import {
   scrapeLattesUrl,
   scrapeAndDownloadPdf,
   scrapeAndDownloadWord,
-} from './api/curriculoApi'
-import './App.css'
+} from "./api/curriculoApi";
+import "./App.css";
 
-const STATUS = { IDLE: 'idle', LOADING: 'loading', PREVIEW: 'preview', ERROR: 'error' }
-const MODE = { XML: 'xml', URL: 'url' }
+const STATUS = {
+  IDLE: "idle",
+  LOADING: "loading",
+  PREVIEW: "preview",
+  ERROR: "error",
+};
+const MODE = { XML: "xml", URL: "url" };
 
 export default function App() {
-  const [mode, setMode] = useState(MODE.XML)
-  const [status, setStatus] = useState(STATUS.IDLE)
-  const [curriculo, setCurriculo] = useState(null)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [lattesUrl, setLattesUrl] = useState('')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [downloading, setDownloading] = useState(false)
-  const [downloadingWord, setDownloadingWord] = useState(false)
+  const [mode, setMode] = useState(MODE.XML);
+  const [status, setStatus] = useState(STATUS.IDLE);
+  const [curriculo, setCurriculo] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [lattesUrl, setLattesUrl] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadingWord, setDownloadingWord] = useState(false);
 
   // ---- mode switching ----
   const switchMode = (newMode) => {
-    if (newMode === mode) return
-    setMode(newMode)
-    handleReset()
-  }
+    if (newMode === mode) return;
+    setMode(newMode);
+    handleReset();
+  };
 
   // ---- XML upload flow ----
   const handleFileSelected = useCallback(async (file) => {
-    setSelectedFile(file)
-    setStatus(STATUS.LOADING)
-    setErrorMsg('')
+    setSelectedFile(file);
+    setStatus(STATUS.LOADING);
+    setErrorMsg("");
     try {
-      const data = await parseCurriculo(file)
-      setCurriculo(data)
-      setStatus(STATUS.PREVIEW)
+      const data = await parseCurriculo(file);
+      setCurriculo(data);
+      setStatus(STATUS.PREVIEW);
     } catch (err) {
-      const msg = err.response?.status === 400
-        ? 'Arquivo inválido. Certifique-se de que é um XML exportado da Plataforma Lattes.'
-        : 'Erro ao processar o arquivo. Verifique se o servidor backend está rodando em localhost:8080.'
-      setErrorMsg(msg)
-      setStatus(STATUS.ERROR)
+      const msg =
+        err.response?.status === 400
+          ? "Arquivo inválido. Certifique-se de que é um XML exportado da Plataforma Lattes."
+          : "Erro ao processar o arquivo. Verifique se o servidor backend está rodando em localhost:8080.";
+      setErrorMsg(msg);
+      setStatus(STATUS.ERROR);
     }
-  }, [])
+  }, []);
 
   // ---- URL scraping flow ----
   const handleUrlSubmit = useCallback(async (url) => {
-    setLattesUrl(url)
-    setStatus(STATUS.LOADING)
-    setErrorMsg('')
+    setLattesUrl(url);
+    setStatus(STATUS.LOADING);
+    setErrorMsg("");
     try {
-      const data = await scrapeLattesUrl(url)
-      setCurriculo(data)
-      setStatus(STATUS.PREVIEW)
+      const data = await scrapeLattesUrl(url);
+      setCurriculo(data);
+      setStatus(STATUS.PREVIEW);
     } catch (err) {
-      let msg
-      const status = err.response?.status
+      let msg;
+      const status = err.response?.status;
       if (status === 400) {
-        msg = 'URL inválida. Verifique se a URL pertence ao domínio lattes.cnpq.br.'
+        msg =
+          "URL inválida. Verifique se a URL pertence ao domínio lattes.cnpq.br.";
       } else if (status === 403) {
-        msg = 'Acesso negado. O perfil Lattes pode estar configurado como privado.'
+        msg =
+          "Acesso negado. O perfil Lattes pode estar configurado como privado.";
       } else if (status === 404) {
-        msg = 'Currículo não encontrado. Verifique se a URL está correta.'
-      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        msg = 'Tempo limite excedido. O servidor Lattes pode estar lento. Tente novamente.'
+        msg = "Currículo não encontrado. Verifique se a URL está correta.";
+      } else if (
+        err.code === "ECONNABORTED" ||
+        err.message?.includes("timeout")
+      ) {
+        msg =
+          "Tempo limite excedido. O servidor Lattes pode estar lento. Tente novamente.";
       } else {
-        msg = 'Não foi possível acessar o currículo. Verifique se a URL está correta e o perfil é público.'
+        msg =
+          "Não foi possível acessar o currículo. Verifique se a URL está correta e o perfil é público.";
       }
-      setErrorMsg(msg)
-      setStatus(STATUS.ERROR)
+      setErrorMsg(msg);
+      setStatus(STATUS.ERROR);
     }
-  }, [])
+  }, []);
 
   // ---- downloads ----
   const handleDownload = useCallback(async () => {
     const fileName = curriculo?.nomeCompleto
-      ? `${curriculo.nomeCompleto.replace(/\s+/g, '_')}_curriculo.pdf`
-      : 'curriculo.pdf'
-    setDownloading(true)
+      ? `${curriculo.nomeCompleto.replace(/\s+/g, "_")}_curriculo.pdf`
+      : "curriculo.pdf";
+    setDownloading(true);
     try {
       if (mode === MODE.URL) {
-        await scrapeAndDownloadPdf(lattesUrl, fileName)
+        await scrapeAndDownloadPdf(lattesUrl, fileName);
       } else {
-        if (!selectedFile) return
-        await convertAndDownload(selectedFile, fileName)
+        if (!selectedFile) return;
+        await convertAndDownload(selectedFile, fileName);
       }
     } catch {
-      alert('Erro ao gerar o PDF. Tente novamente.')
+      alert("Erro ao gerar o PDF. Tente novamente.");
     } finally {
-      setDownloading(false)
+      setDownloading(false);
     }
-  }, [mode, selectedFile, lattesUrl, curriculo])
+  }, [mode, selectedFile, lattesUrl, curriculo]);
 
   const handleDownloadWord = useCallback(async () => {
     const fileName = curriculo?.nomeCompleto
-      ? `${curriculo.nomeCompleto.replace(/\s+/g, '_')}_curriculo.docx`
-      : 'curriculo.docx'
-    setDownloadingWord(true)
+      ? `${curriculo.nomeCompleto.replace(/\s+/g, "_")}_curriculo.docx`
+      : "curriculo.docx";
+    setDownloadingWord(true);
     try {
       if (mode === MODE.URL) {
-        await scrapeAndDownloadWord(lattesUrl, fileName)
+        await scrapeAndDownloadWord(lattesUrl, fileName);
       } else {
-        if (!selectedFile) return
-        await convertAndDownloadWord(selectedFile, fileName)
+        if (!selectedFile) return;
+        await convertAndDownloadWord(selectedFile, fileName);
       }
     } catch {
-      alert('Erro ao gerar o Word. Tente novamente.')
+      alert("Erro ao gerar o Word. Tente novamente.");
     } finally {
-      setDownloadingWord(false)
+      setDownloadingWord(false);
     }
-  }, [mode, selectedFile, lattesUrl, curriculo])
+  }, [mode, selectedFile, lattesUrl, curriculo]);
 
   const handleReset = () => {
-    setStatus(STATUS.IDLE)
-    setCurriculo(null)
-    setSelectedFile(null)
-    setLattesUrl('')
-    setErrorMsg('')
-  }
+    setStatus(STATUS.IDLE);
+    setCurriculo(null);
+    setSelectedFile(null);
+    setLattesUrl("");
+    setErrorMsg("");
+  };
 
   return (
     <div className="app-shell">
@@ -133,7 +146,8 @@ export default function App() {
           <div>
             <h1 className="app-title">CV Lattes → Currículo Vitae</h1>
             <p className="app-subtitle">
-              Converta seu currículo Lattes (CNPq) em um PDF ou Word profissional
+              Converta seu currículo Lattes (CNPq) em um PDF ou Word
+              profissional
             </p>
           </div>
         </div>
@@ -144,13 +158,13 @@ export default function App() {
         {status === STATUS.IDLE && (
           <div className="mode-tabs">
             <button
-              className={`mode-tab ${mode === MODE.XML ? 'mode-tab--active' : ''}`}
+              className={`mode-tab ${mode === MODE.XML ? "mode-tab--active" : ""}`}
               onClick={() => switchMode(MODE.XML)}
             >
               📤 Upload XML
             </button>
             <button
-              className={`mode-tab ${mode === MODE.URL ? 'mode-tab--active' : ''}`}
+              className={`mode-tab ${mode === MODE.URL ? "mode-tab--active" : ""}`}
               onClick={() => switchMode(MODE.URL)}
             >
               🔗 URL do Lattes
@@ -178,8 +192,8 @@ export default function App() {
             <div className="spinner" aria-label="Carregando" />
             <p>
               {mode === MODE.URL
-                ? 'Buscando dados do Lattes...'
-                : 'Processando o arquivo XML...'}
+                ? "Buscando dados do Lattes..."
+                : "Processando o arquivo XML..."}
             </p>
           </div>
         )}
@@ -200,7 +214,7 @@ export default function App() {
             <div className="preview-toolbar">
               <div className="preview-file-info">
                 <span className="file-icon">
-                  {mode === MODE.URL ? '🔗' : '📄'}
+                  {mode === MODE.URL ? "🔗" : "📄"}
                 </span>
                 <span className="file-name">
                   {mode === MODE.URL ? lattesUrl : selectedFile?.name}
@@ -208,21 +222,21 @@ export default function App() {
               </div>
               <div className="preview-actions">
                 <button className="btn btn-secondary" onClick={handleReset}>
-                  ← {mode === MODE.URL ? 'Nova busca' : 'Novo arquivo'}
+                  ← {mode === MODE.URL ? "Nova busca" : "Novo arquivo"}
                 </button>
                 <button
                   className="btn btn-primary"
                   onClick={handleDownload}
                   disabled={downloading}
                 >
-                  {downloading ? 'Gerando PDF...' : '⬇ Baixar PDF'}
+                  {downloading ? "Gerando PDF..." : "⬇ Baixar PDF"}
                 </button>
                 <button
                   className="btn btn-secondary"
                   onClick={handleDownloadWord}
                   disabled={downloadingWord}
                 >
-                  {downloadingWord ? 'Gerando Word...' : '📝 Baixar Word'}
+                  {downloadingWord ? "Gerando Word..." : "📝 Baixar Word"}
                 </button>
               </div>
             </div>
@@ -235,14 +249,16 @@ export default function App() {
                 onClick={handleDownload}
                 disabled={downloading}
               >
-                {downloading ? 'Gerando PDF...' : '⬇ Baixar Currículo em PDF'}
+                {downloading ? "Gerando PDF..." : "⬇ Baixar Currículo em PDF"}
               </button>
               <button
                 className="btn btn-secondary btn-lg"
                 onClick={handleDownloadWord}
                 disabled={downloadingWord}
               >
-                {downloadingWord ? 'Gerando Word...' : '📝 Baixar Currículo em Word'}
+                {downloadingWord
+                  ? "Gerando Word..."
+                  : "📝 Baixar Currículo em Word"}
               </button>
             </div>
           </>
@@ -253,5 +269,5 @@ export default function App() {
         Gerado a partir da Plataforma Lattes — CNPq
       </footer>
     </div>
-  )
+  );
 }

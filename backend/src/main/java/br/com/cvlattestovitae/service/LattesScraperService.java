@@ -1,5 +1,6 @@
 package br.com.cvlattestovitae.service;
 
+import br.com.cvlattestovitae.exception.CaptchaRequiredException;
 import br.com.cvlattestovitae.model.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -65,6 +66,10 @@ public class LattesScraperService {
                 .followRedirects(true)
                 .get();
 
+        if (isCaptchaPage(doc)) {
+            throw new CaptchaRequiredException();
+        }
+
         Curriculo curriculo = new Curriculo();
 
         extractNome(doc, curriculo);
@@ -83,6 +88,31 @@ public class LattesScraperService {
         extractPremios(doc, curriculo);
 
         return curriculo;
+    }
+
+    // -------------------------------------------------------------------------
+    // Captcha detection
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns {@code true} when the fetched page is a CAPTCHA challenge page
+     * (not the actual curriculum).
+     */
+    private boolean isCaptchaPage(Document doc) {
+        // CNPq captcha page contains an input named "tokenCaptchar" and/or a
+        // reCAPTCHA widget, and its title includes "Código de Segurança".
+        boolean hasCaptchaInput = doc.selectFirst(
+                "input[name=tokenCaptchar], .g-recaptcha, #g-recaptcha, "
+                + "iframe[src*=recaptcha], form[action*=captchar]") != null;
+        boolean hasCaptchaTitle = doc.title().toLowerCase().contains("código de segurança")
+                || doc.title().toLowerCase().contains("codigo de seguranca")
+                || doc.title().toLowerCase().contains("captcha");
+        // If the page contains no typical CV elements, also treat it as captcha/error
+        boolean hasNoCvContent = doc.selectFirst(
+                "#pagina-curriculo, #curriculo, .dados-curriculo, "
+                + ".layout-cell-pad-main, #content-cv") == null
+                && doc.getElementsByTag("b").isEmpty();
+        return hasCaptchaInput || hasCaptchaTitle || hasNoCvContent;
     }
 
     // -------------------------------------------------------------------------

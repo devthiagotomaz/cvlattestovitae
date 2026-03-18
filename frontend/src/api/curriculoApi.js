@@ -12,8 +12,8 @@ const BASE = '/api'
  * @returns {Promise<object>} Curriculo JSON
  */
 export async function scrapeLattesUrl(url) {
-  const resp = await axios.post(`${BASE}/scrape`, { url })
-  return resp.data
+    const resp = await axios.post(`${BASE}/scrape`, { url })
+    return resp.data
 }
 
 /**
@@ -22,18 +22,18 @@ export async function scrapeLattesUrl(url) {
  * @param {string} fileName — suggested download filename
  */
 export async function scrapeAndDownloadPdf(url, fileName = 'curriculo.pdf') {
-  const resp = await axios.post(`${BASE}/scrape/convert`, { url }, {
-    responseType: 'blob',
-  })
+    const resp = await axios.post(`${BASE}/scrape/convert`, { url }, {
+        responseType: 'blob',
+    })
 
-  const blobUrl = window.URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }))
-  const link = document.createElement('a')
-  link.href = blobUrl
-  link.setAttribute('download', fileName)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(blobUrl)
+    const blobUrl = window.URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.setAttribute('download', fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(blobUrl)
 }
 
 /**
@@ -42,19 +42,19 @@ export async function scrapeAndDownloadPdf(url, fileName = 'curriculo.pdf') {
  * @param {string} fileName — suggested download filename
  */
 export async function scrapeAndDownloadWord(url, fileName = 'curriculo.docx') {
-  const resp = await axios.post(`${BASE}/scrape/convert/word`, { url }, {
-    responseType: 'blob',
-  })
+    const resp = await axios.post(`${BASE}/scrape/convert/word`, { url }, {
+        responseType: 'blob',
+    })
 
-  const wordMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  const blobUrl = window.URL.createObjectURL(new Blob([resp.data], { type: wordMime }))
-  const link = document.createElement('a')
-  link.href = blobUrl
-  link.setAttribute('download', fileName)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(blobUrl)
+    const wordMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const blobUrl = window.URL.createObjectURL(new Blob([resp.data], { type: wordMime }))
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.setAttribute('download', fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(blobUrl)
 }
 
 /**
@@ -63,12 +63,12 @@ export async function scrapeAndDownloadWord(url, fileName = 'curriculo.docx') {
  * @returns {Promise<object>} Curriculo JSON
  */
 export async function parseCurriculo(file) {
-  const form = new FormData()
-  form.append('file', file)
-  const resp = await axios.post(`${BASE}/parse`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  return resp.data
+    const form = new FormData()
+    form.append('file', file)
+    const resp = await axios.post(`${BASE}/parse`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return resp.data
 }
 
 /**
@@ -77,21 +77,21 @@ export async function parseCurriculo(file) {
  * @param {string} fileName  — suggested download filename
  */
 export async function convertAndDownload(file, fileName = 'curriculo.pdf') {
-  const form = new FormData()
-  form.append('file', file)
-  const resp = await axios.post(`${BASE}/convert`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    responseType: 'blob',
-  })
+    const form = new FormData()
+    form.append('file', file)
+    const resp = await axios.post(`${BASE}/convert`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        responseType: 'blob',
+    })
 
-  const url = window.URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.setAttribute('download', fileName)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
+    const url = window.URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
 }
 
 /**
@@ -100,20 +100,20 @@ export async function convertAndDownload(file, fileName = 'curriculo.pdf') {
  * @param {string} fileName  — suggested download filename
  */
 export async function convertAndDownloadWord(file, fileName = 'curriculo.docx') {
-  const form = new FormData()
-  form.append('file', file)
-  const resp = await axios.post(`${BASE}/convert/word`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    responseType: 'blob',
-  })
+    const form = new FormData()
+    form.append('file', file)
+    const resp = await axios.post(`${BASE}/convert/word`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        responseType: 'blob',
+    })
 
-  const wordMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  const url = window.URL.createObjectURL(new Blob([resp.data], { type: wordMime }))
-  const link = document.createElement('a')
-  link.href = url
-  link.setAttribute('download', fileName)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
+    const wordMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const url = window.URL.createObjectURL(new Blob([resp.data], { type: wordMime }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', fileName)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
 }

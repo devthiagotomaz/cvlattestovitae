@@ -4,14 +4,14 @@ Converte um currículo da **Plataforma Lattes (CNPq)** — via upload de XML ou 
 
 ## Tecnologias
 
-| Camada | Tecnologia |
-|---|---|
-| Backend | Java 17 · Spring Boot 3.2 · Maven |
-| Parsing XML | Java DOM (javax.xml) |
-| Scraping HTML | Jsoup 1.17.2 |
-| Geração de PDF | Thymeleaf (template HTML) + Flying Saucer |
-| Geração de Word | Apache POI (`poi-ooxml` 5.2.5) |
-| Frontend | React 18 · Vite 5 · CSS Modules |
+| Camada          | Tecnologia                                |
+| --------------- | ----------------------------------------- |
+| Backend         | Java 17 · Spring Boot 3.2 · Maven         |
+| Parsing XML     | Java DOM (javax.xml)                      |
+| Scraping HTML   | Jsoup 1.17.2                              |
+| Geração de PDF  | Thymeleaf (template HTML) + Flying Saucer |
+| Geração de Word | Apache POI (`poi-ooxml` 5.2.5)            |
+| Frontend        | React 18 · Vite 5 · CSS Modules           |
 
 ## Como executar
 
@@ -79,25 +79,26 @@ Acesse: **http://localhost:5173**
 
 ### Upload XML
 
-| Método | Rota | Descrição |
-|---|---|---|
-| `POST` | `/api/parse` | Recebe XML, retorna JSON com os dados do currículo |
-| `POST` | `/api/convert` | Recebe XML, retorna PDF para download |
-| `POST` | `/api/convert/word` | Recebe XML, retorna Word (.docx) para download |
+| Método | Rota                | Descrição                                          |
+| ------ | ------------------- | -------------------------------------------------- |
+| `POST` | `/api/parse`        | Recebe XML, retorna JSON com os dados do currículo |
+| `POST` | `/api/convert`      | Recebe XML, retorna PDF para download              |
+| `POST` | `/api/convert/word` | Recebe XML, retorna Word (.docx) para download     |
 
 Todos aceitam `multipart/form-data` com um campo chamado `file`.
 
 ### Scraping por URL
 
-| Método | Rota | Descrição |
-|---|---|---|
-| `POST` | `/api/scrape` | Recebe `{ "url": "..." }`, retorna JSON com os dados do currículo |
-| `POST` | `/api/scrape/convert` | Recebe `{ "url": "..." }`, retorna PDF para download |
-| `POST` | `/api/scrape/convert/word` | Recebe `{ "url": "..." }`, retorna Word (.docx) para download |
+| Método | Rota                       | Descrição                                                         |
+| ------ | -------------------------- | ----------------------------------------------------------------- |
+| `POST` | `/api/scrape`              | Recebe `{ "url": "..." }`, retorna JSON com os dados do currículo |
+| `POST` | `/api/scrape/convert`      | Recebe `{ "url": "..." }`, retorna PDF para download              |
+| `POST` | `/api/scrape/convert/word` | Recebe `{ "url": "..." }`, retorna Word (.docx) para download     |
 
 Todos aceitam `application/json` com o campo `url` apontando para um perfil público do domínio `buscatextual.cnpq.br` ou `lattes.cnpq.br`.
 
 **Exemplo de request:**
+
 ```json
 POST /api/scrape
 Content-Type: application/json
