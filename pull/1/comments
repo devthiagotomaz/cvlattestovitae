@@ -1,0 +1,42 @@
+## ⚠️ Correção importante: URL base do scraping do Lattes
+
+A URL base para acessar o currículo Lattes **não** é `http://lattes.cnpq.br/ID`, mas sim:
+
+```
+https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=XXXXXXXXXXXXXXXX
+```
+
+### O que precisa ser ajustado no `LattesScraperService.java`:
+
+1. **Validação de URL** — aceitar e validar o domínio `buscatextual.cnpq.br`:
+```java
+if (!url.contains("buscatextual.cnpq.br") && !url.contains("lattes.cnpq.br")) {
+    throw new IllegalArgumentException("URL inválida. Use uma URL do Lattes (buscatextual.cnpq.br).");
+}
+```
+
+2. **Conexão Jsoup** — usando o domínio correto `buscatextual.cnpq.br`:
+```java
+Document doc = Jsoup.connect(url)
+    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    .timeout(30_000)
+    .followRedirects(true)
+    .get();
+```
+
+3. **Seletores HTML** da página `buscatextual.cnpq.br/buscatextual/visualizacv.do`:
+   - Nome: `div#nome` ou `h2.nome`
+   - Seções: `div.layout-cell-pad-main > div` com `h1` para título de cada seção
+   - Itens de produção: `div.cita-artigo`, `div.layout-cell-01`, `div.layout-cell-02`
+   - Resumo: `div#resumo`
+
+4. **Frontend** — atualizar placeholder e validação no `LattesUrlInput.jsx`:
+```jsx
+placeholder="https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=XXXXXXXXXXXXXXXX"
+
+const isValid = url.includes('buscatextual.cnpq.br') || url.includes('lattes.cnpq.br')
+```
+
+5. **README** — usar o formato correto de URL nos exemplos.
+
+Por favor, aplique essas correções antes de finalizar a implementação.
