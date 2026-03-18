@@ -1,12 +1,14 @@
 package br.com.cvlattestovitae.controller;
 
 import br.com.cvlattestovitae.dto.ScraperRequest;
+import br.com.cvlattestovitae.exception.CaptchaRequiredException;
 import br.com.cvlattestovitae.model.Curriculo;
 import br.com.cvlattestovitae.service.LattesScraperService;
 import br.com.cvlattestovitae.service.PdfGeneratorService;
 import br.com.cvlattestovitae.service.WordGeneratorService;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +45,8 @@ public class LattesScraperController {
             return ResponseEntity.ok(curriculo);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (CaptchaRequiredException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -72,6 +76,8 @@ public class LattesScraperController {
             return ResponseEntity.ok().headers(headers).body(pdf);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (CaptchaRequiredException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -103,6 +109,8 @@ public class LattesScraperController {
             return ResponseEntity.ok().headers(headers).body(docx);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (CaptchaRequiredException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

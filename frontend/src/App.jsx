@@ -76,6 +76,9 @@ export default function App() {
           "Acesso negado. O perfil Lattes pode estar configurado como privado.";
       } else if (status === 404) {
         msg = "Currículo não encontrado. Verifique se a URL está correta.";
+      } else if (status === 503) {
+        msg =
+          "O Lattes está exigindo verificação de segurança (CAPTCHA). Por favor, acesse o perfil manualmente no navegador e tente novamente em alguns minutos.";
       } else if (
         err.code === "ECONNABORTED" ||
         err.message?.includes("timeout")
