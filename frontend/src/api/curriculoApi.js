@@ -12,7 +12,7 @@ const BASE = '/api'
  * @returns {Promise<object>} Curriculo JSON
  */
 export async function scrapeLattesUrl(url) {
-    const resp = await axios.post(`${BASE}/scrape`, { url })
+    const resp = await axios.post(`${BASE}/scrape`, { url }, { timeout: 60_000 })
     return resp.data
 }
 
