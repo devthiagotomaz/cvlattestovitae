@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/scrape")
@@ -36,9 +37,11 @@ public class LattesScraperController {
      * POST /api/scrape
      * Fetches the public Lattes page and returns the parsed curriculum as JSON
      * (same contract as POST /api/parse, but accepts a URL instead of a file).
+     * Returns HTTP 503 with a JSON body containing {@code captchaUrl} when the
+     * Lattes page requires CAPTCHA resolution.
      */
     @PostMapping
-    public ResponseEntity<Curriculo> scrape(@RequestBody ScraperRequest request) {
+    public ResponseEntity<?> scrape(@RequestBody ScraperRequest request) {
         try {
             scraperService.validateUrl(request.getUrl());
             Curriculo curriculo = scraperService.scrape(request.getUrl());
@@ -46,7 +49,12 @@ public class LattesScraperController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         } catch (CaptchaRequiredException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of(
+                            "error", "captcha_required",
+                            "captchaUrl", e.getCaptchaUrl(),
+                            "message", "A página do Lattes requer verificação de segurança (CAPTCHA)."
+                    ));
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }

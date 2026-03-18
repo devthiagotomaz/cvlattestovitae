@@ -124,6 +124,68 @@ body {
   line-height: 1.5;
 }
 
+/* ---- CAPTCHA ---- */
+.captcha-box {
+  background: #fffbf0;
+  border: 1.5px solid #f5d87c;
+  border-radius: 10px;
+  padding: 32px 28px;
+  max-width: 600px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.captcha-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.captcha-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #7a5c00;
+  margin-bottom: 10px;
+}
+
+.captcha-desc {
+  color: #5a4500;
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+
+.captcha-steps {
+  text-align: left;
+  display: inline-block;
+  margin: 0 auto 20px;
+  padding-left: 20px;
+  color: #4a3a00;
+  font-size: 0.9rem;
+  line-height: 2;
+}
+
+.captcha-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.captcha-hint {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 8px;
+  word-break: break-all;
+}
+
+.captcha-url {
+  background: #f4f4f4;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
 /* ---- PREVIEW TOOLBAR ---- */
 .preview-toolbar {
   display: flex;

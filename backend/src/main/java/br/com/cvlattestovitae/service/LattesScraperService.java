@@ -67,7 +67,7 @@ public class LattesScraperService {
                 .get();
 
         if (isCaptchaPage(doc)) {
-            throw new CaptchaRequiredException();
+            throw new CaptchaRequiredException(url.trim());
         }
 
         Curriculo curriculo = new Curriculo();
@@ -336,30 +336,50 @@ public class LattesScraperService {
 
     private List<Publicacao> extractPublicacoes(Element section, String tipo) {
         List<Publicacao> publicacoes = new ArrayList<>();
-        // .cita-artigo is used by buscatextual.cnpq.br/visualizacv.do for publication entries
-        Elements items = section.select(".informacoes-producao, .dados-producao, .cita-artigo, li, p");
-        for (Element item : items) {
-            String text = item.text().trim();
-            if (text.isEmpty()) continue;
-            Publicacao p = new Publicacao();
-            p.setTipo(tipo);
-            p.setTitulo(text);
-            // Try to extract a 4-digit year
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{4})").matcher(text);
-            if (m.find()) p.setAno(m.group(1));
-            publicacoes.add(p);
-        }
-        if (publicacoes.isEmpty()) {
-            for (String line : section.text().split("\n")) {
-                String trimmed = line.trim();
-                if (trimmed.isEmpty()) continue;
+        // Prefer structured containers; avoid mixing parent and child selectors to prevent duplicates.
+        // .cita-artigo is used by buscatextual.cnpq.br/visualizacv.do; .layout-cell-02 holds the
+        // human-readable citation text inside each .cita-artigo.
+        Elements citaItems = section.select(".cita-artigo");
+        if (!citaItems.isEmpty()) {
+            for (Element item : citaItems) {
+                // Prefer the content column (.layout-cell-02) for cleaner text; fall back to full item text
+                Element contentEl = item.selectFirst(".layout-cell-02, .layout-cell-pad-02");
+                String text = (contentEl != null ? contentEl : item).text().trim();
+                if (text.isEmpty()) continue;
                 Publicacao p = new Publicacao();
                 p.setTipo(tipo);
-                p.setTitulo(trimmed);
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{4})").matcher(trimmed);
+                p.setTitulo(text);
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{4})").matcher(text);
                 if (m.find()) p.setAno(m.group(1));
                 publicacoes.add(p);
             }
+            return publicacoes;
+        }
+        // Fall back to structured production entries used by other Lattes page variants
+        Elements items = section.select(".informacoes-producao, .dados-producao");
+        if (!items.isEmpty()) {
+            for (Element item : items) {
+                String text = item.text().trim();
+                if (text.isEmpty()) continue;
+                Publicacao p = new Publicacao();
+                p.setTipo(tipo);
+                p.setTitulo(text);
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{4})").matcher(text);
+                if (m.find()) p.setAno(m.group(1));
+                publicacoes.add(p);
+            }
+            return publicacoes;
+        }
+        // Last resort: split raw text of the section by newlines
+        for (String line : section.text().split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty()) continue;
+            Publicacao p = new Publicacao();
+            p.setTipo(tipo);
+            p.setTitulo(trimmed);
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{4})").matcher(trimmed);
+            if (m.find()) p.setAno(m.group(1));
+            publicacoes.add(p);
         }
         return publicacoes;
     }
@@ -475,9 +495,10 @@ public class LattesScraperService {
      */
     private Element findSectionByTitle(Document doc, String sectionTitle) {
         // Strategy 1: look for any element whose text exactly/partially matches the title.
-        // <b> is added here to handle buscatextual.cnpq.br/visualizacv.do which uses
-        // <b>Section Name</b> as the section header inside the same div as the content.
-        for (Element el : doc.select("span.title, div.title, b, h2, h3, h4, dt, .group-title")) {
+        // h1 is added here because buscatextual.cnpq.br/visualizacv.do wraps each section
+        // title in an <h1> tag inside a div that also holds the content items.
+        // <b> handles the older visualizacv.do layout which uses <b>Section Name</b>.
+        for (Element el : doc.select("h1, span.title, div.title, b, h2, h3, h4, dt, .group-title")) {
             if (el.text().trim().equalsIgnoreCase(sectionTitle)
                     || el.text().trim().toLowerCase().contains(sectionTitle.toLowerCase())) {
                 Element parent = el.parent();
