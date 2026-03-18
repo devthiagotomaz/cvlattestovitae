@@ -53,7 +53,7 @@ Acesse: **http://localhost:5173**
 
 1. Abra `http://localhost:5173` no navegador.
 2. Selecione a aba **🔗 URL do Lattes**.
-3. Cole a URL pública do perfil Lattes (ex: `http://lattes.cnpq.br/1234567890123456`).
+3. Cole a URL pública do perfil Lattes (ex: `https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=XXXXXXXXXXXXXXXX`).
 4. Clique em **"Buscar e Converter"**.
 5. Visualize o preview e faça o download em PDF ou Word.
 
@@ -95,14 +95,14 @@ Todos aceitam `multipart/form-data` com um campo chamado `file`.
 | `POST` | `/api/scrape/convert` | Recebe `{ "url": "..." }`, retorna PDF para download |
 | `POST` | `/api/scrape/convert/word` | Recebe `{ "url": "..." }`, retorna Word (.docx) para download |
 
-Todos aceitam `application/json` com o campo `url` apontando para um perfil público do domínio `lattes.cnpq.br`.
+Todos aceitam `application/json` com o campo `url` apontando para um perfil público do domínio `buscatextual.cnpq.br` ou `lattes.cnpq.br`.
 
 **Exemplo de request:**
 ```json
 POST /api/scrape
 Content-Type: application/json
 
-{ "url": "http://lattes.cnpq.br/1234567890123456" }
+{ "url": "https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=XXXXXXXXXXXXXXXX" }
 ```
 
 ## Segurança
@@ -111,7 +111,7 @@ Content-Type: application/json
 - Upload máximo: 10 MB.
 - Apenas arquivos `.xml` são aceitos no modo de upload.
 - CORS configurado apenas para `localhost:5173` e `localhost:3000`.
-- Scraping por URL: apenas URLs do domínio `lattes.cnpq.br` são aceitas (validação no backend e no frontend), prevenindo SSRF.
+- Scraping por URL: apenas URLs dos domínios `lattes.cnpq.br` e `buscatextual.cnpq.br` são aceitas (validação no backend e no frontend), prevenindo SSRF.
 
 ## Limitações do scraping
 
