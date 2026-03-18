@@ -17,6 +17,7 @@ const STATUS = {
   LOADING: "loading",
   PREVIEW: "preview",
   ERROR: "error",
+  CAPTCHA: "captcha",
 };
 const MODE = { XML: "xml", URL: "url" };
 
@@ -27,6 +28,7 @@ export default function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [lattesUrl, setLattesUrl] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [captchaUrl, setCaptchaUrl] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [downloadingWord, setDownloadingWord] = useState(false);
 
@@ -61,22 +63,31 @@ export default function App() {
     setLattesUrl(url);
     setStatus(STATUS.LOADING);
     setErrorMsg("");
+    setCaptchaUrl("");
     try {
       const data = await scrapeLattesUrl(url);
       setCurriculo(data);
       setStatus(STATUS.PREVIEW);
     } catch (err) {
       let msg;
-      const status = err.response?.status;
-      if (status === 400) {
+      const httpStatus = err.response?.status;
+      if (httpStatus === 400) {
         msg =
           "URL inválida. Verifique se a URL pertence ao domínio lattes.cnpq.br.";
-      } else if (status === 403) {
+      } else if (httpStatus === 403) {
         msg =
           "Acesso negado. O perfil Lattes pode estar configurado como privado.";
-      } else if (status === 404) {
+      } else if (httpStatus === 404) {
         msg = "Currículo não encontrado. Verifique se a URL está correta.";
-      } else if (status === 503) {
+      } else if (httpStatus === 503) {
+        const responseData = err.response?.data;
+        const urlFromResponse =
+          typeof responseData === "object" ? responseData?.captchaUrl : null;
+        if (urlFromResponse) {
+          setCaptchaUrl(urlFromResponse);
+          setStatus(STATUS.CAPTCHA);
+          return;
+        }
         msg =
           "O Lattes está exigindo verificação de segurança (CAPTCHA). Por favor, acesse o perfil manualmente no navegador e tente novamente em alguns minutos.";
       } else if (
@@ -139,6 +150,7 @@ export default function App() {
     setSelectedFile(null);
     setLattesUrl("");
     setErrorMsg("");
+    setCaptchaUrl("");
   };
 
   return (
@@ -211,6 +223,48 @@ export default function App() {
           </div>
         )}
 
+        {/* ---- CAPTCHA REQUIRED ---- */}
+        {status === STATUS.CAPTCHA && (
+          <div className="captcha-box">
+            <div className="captcha-icon">🔒</div>
+            <h2 className="captcha-title">Verificação de Segurança Necessária</h2>
+            <p className="captcha-desc">
+              O Lattes está exigindo que você comprove que não é um robô antes
+              de exibir o currículo.
+            </p>
+            <ol className="captcha-steps">
+              <li>
+                Clique em <strong>"Abrir verificação no Lattes"</strong> abaixo
+              </li>
+              <li>Na nova aba, resolva o desafio de segurança (CAPTCHA)</li>
+              <li>Volte aqui e clique em <strong>"Tentar novamente"</strong></li>
+            </ol>
+            <div className="captcha-actions">
+              <a
+                href={captchaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+              >
+                🔗 Abrir verificação no Lattes
+              </a>
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleUrlSubmit(lattesUrl)}
+              >
+                🔄 Tentar novamente
+              </button>
+              <button className="btn btn-secondary" onClick={handleReset}>
+                ← Cancelar
+              </button>
+            </div>
+            <p className="captcha-hint">
+              URL da verificação:{" "}
+              <code className="captcha-url">{captchaUrl}</code>
+            </p>
+          </div>
+        )}
+
         {/* ---- PREVIEW ---- */}
         {status === STATUS.PREVIEW && curriculo && (
           <>
@@ -274,3 +328,4 @@ export default function App() {
     </div>
   );
 }
+
