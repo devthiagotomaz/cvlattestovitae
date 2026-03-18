@@ -90,22 +90,22 @@ public class LattesScraperService {
     // -------------------------------------------------------------------------
 
     private void extractNome(Document doc, Curriculo curriculo) {
-        // Primary selector used by Lattes public pages
-        Element h2 = doc.selectFirst("h2.title");
-        if (h2 != null) {
-            curriculo.setNomeCompleto(h2.text().trim());
-            return;
-        }
-        // Fallback selectors
-        Element nome = doc.selectFirst(".nome, #nomeCompleto, .layout-cell-pad-main h2");
+        // Primary selector used by buscatextual.cnpq.br/visualizacv.do
+        Element nome = doc.selectFirst("h2.nome, div#nome h1, div#nome h2, div#dados-gerais h2");
         if (nome != null) {
             curriculo.setNomeCompleto(nome.text().trim());
+            return;
+        }
+        // Fallback: generic Lattes public-profile selectors
+        Element fallback = doc.selectFirst("h2.title, .nome, #nomeCompleto, .layout-cell-pad-main h2");
+        if (fallback != null) {
+            curriculo.setNomeCompleto(fallback.text().trim());
         }
     }
 
     private void extractResumo(Document doc, Curriculo curriculo) {
-        // Lattes wraps the mini-biography in a <div class="layout-cell-pad-main"> right below the header
-        Element resumoEl = doc.selectFirst(".resumo-cv, #mini-bio, [data-name='Resumo']");
+        // Selectors for buscatextual.cnpq.br/visualizacv.do
+        Element resumoEl = doc.selectFirst("div#resumo, div.resumo, .resumo-cv, #mini-bio, [data-name='Resumo']");
         if (resumoEl != null) {
             curriculo.setResumo(resumoEl.text().trim());
             return;
@@ -306,7 +306,8 @@ public class LattesScraperService {
 
     private List<Publicacao> extractPublicacoes(Element section, String tipo) {
         List<Publicacao> publicacoes = new ArrayList<>();
-        Elements items = section.select(".informacoes-producao, .dados-producao, li, p");
+        // .cita-artigo is used by buscatextual.cnpq.br/visualizacv.do for publication entries
+        Elements items = section.select(".informacoes-producao, .dados-producao, .cita-artigo, li, p");
         for (Element item : items) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
@@ -431,25 +432,39 @@ public class LattesScraperService {
     // -------------------------------------------------------------------------
 
     /**
-     * Finds the nearest sibling content block for a Lattes HTML section header.
-     * The Lattes page uses {@code <div class="title">} headings with
-     * {@code <div class="layout-cell-pad-main">} content cells.
+     * Finds the nearest content block for a Lattes HTML section header.
+     * <p>
+     * Handles two page structures:
+     * <ul>
+     *   <li><b>buscatextual.cnpq.br/visualizacv.do</b> — section titles are in {@code <b>} tags
+     *       inside the same {@code <div>} that contains the {@code <ol>} items.</li>
+     *   <li><b>lattes.cnpq.br</b> public-profile pages — section titles are in
+     *       {@code <div class="title">} / {@code <span class="title">} elements whose next sibling
+     *       is the content container.</li>
+     * </ul>
      */
     private Element findSectionByTitle(Document doc, String sectionTitle) {
-        // Strategy 1: look for any element whose text exactly/partially matches the title
-        for (Element el : doc.select("span.title, div.title, h2, h3, h4, dt, .group-title")) {
+        // Strategy 1: look for any element whose text exactly/partially matches the title.
+        // <b> is added here to handle buscatextual.cnpq.br/visualizacv.do which uses
+        // <b>Section Name</b> as the section header inside the same div as the content.
+        for (Element el : doc.select("span.title, div.title, b, h2, h3, h4, dt, .group-title")) {
             if (el.text().trim().equalsIgnoreCase(sectionTitle)
                     || el.text().trim().toLowerCase().contains(sectionTitle.toLowerCase())) {
-                // Return the parent or next sibling that contains the content
                 Element parent = el.parent();
                 if (parent != null) {
-                    // Try to get the content container sibling
-                    Element next = parent.nextElementSibling();
-                    if (next != null) return next;
-                    // Or just return the parent itself if it contains list items
-                    if (!parent.select("li, .informacoes-producao, .dados-producao").isEmpty()) {
+                    // If the parent div directly contains content items the header element belongs
+                    // to the same container as the data (visualizacv.do layout); return the parent.
+                    if (!parent.select("li, .informacoes-producao, .dados-producao, .cita-artigo").isEmpty()) {
                         return parent;
                     }
+                    // Otherwise the header is in a separate block; look for the next sibling
+                    // that holds the actual content.
+                    Element next = parent.nextElementSibling();
+                    if (next != null && !next.select("li, .informacoes-producao, .dados-producao, .cita-artigo").isEmpty()) {
+                        return next;
+                    }
+                    // Fall back to next sibling or parent so raw-text fallbacks in callers can still run
+                    if (next != null) return next;
                     return parent;
                 }
                 return el;
