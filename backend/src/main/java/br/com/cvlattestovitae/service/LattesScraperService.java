@@ -6,6 +6,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @Service
 public class LattesScraperService {
+
+    private static final Logger log = LoggerFactory.getLogger(LattesScraperService.class);
 
     private static final String ALLOWED_HOST = "lattes.cnpq.br";
     private static final String ALLOWED_HOST_ALT = "buscatextual.cnpq.br";
@@ -70,6 +74,24 @@ public class LattesScraperService {
             throw new CaptchaRequiredException(url.trim());
         }
 
+        // ---- Diagnostic logging ----
+        log.info("[SCRAPER] Page title: '{}'", doc.title());
+        log.info("[SCRAPER] layout-cell-pad-main sections found: {}", doc.select("div.layout-cell-pad-main").size());
+        for (Element cell : doc.select("div.layout-cell-pad-main")) {
+            for (Element heading : cell.select("h1, b")) {
+                String txt = heading.text().trim();
+                if (!txt.isEmpty()) {
+                    log.info("[SCRAPER] Heading in layout-cell-pad-main [tag={}]: '{}'", heading.tagName(), txt);
+                }
+            }
+        }
+        Elements allH1 = doc.select("h1");
+        log.info("[SCRAPER] Total <h1> in page: {}", allH1.size());
+        for (Element h : allH1) {
+            log.info("[SCRAPER] <h1>: '{}'", h.text().trim());
+        }
+        // ----------------------------
+
         Curriculo curriculo = new Curriculo();
 
         extractNome(doc, curriculo);
@@ -106,7 +128,9 @@ public class LattesScraperService {
                 + "iframe[src*=recaptcha], form[action*=captchar]") != null;
         boolean hasCaptchaTitle = doc.title().toLowerCase().contains("código de segurança")
                 || doc.title().toLowerCase().contains("codigo de seguranca")
-                || doc.title().toLowerCase().contains("captcha");
+                || doc.title().toLowerCase().contains("captcha")
+                // The CAPTCHA page uses <h2 class="tituloCaptcha"> even when the <title> tag is absent
+                || doc.selectFirst("h2.tituloCaptcha, .divCaptcha, #divCaptcha") != null;
         // If the page contains no typical CV elements, also treat it as captcha/error
         boolean hasNoCvContent = doc.selectFirst(
                 "#pagina-curriculo, #curriculo, .dados-curriculo, "
@@ -126,16 +150,16 @@ public class LattesScraperService {
             curriculo.setNomeCompleto(nome.text().trim());
             return;
         }
-        // Fallback: generic Lattes public-profile selectors
+        // Fallback: generic Lattes public-profile selectors (skip captcha-page elements)
         Element fallback = doc.selectFirst("h2.title, .nome, #nomeCompleto, .layout-cell-pad-main h2");
-        if (fallback != null) {
+        if (fallback != null && !fallback.hasClass("tituloCaptcha")) {
             curriculo.setNomeCompleto(fallback.text().trim());
         }
     }
 
     private void extractResumo(Document doc, Curriculo curriculo) {
-        // Selectors for buscatextual.cnpq.br/visualizacv.do
-        Element resumoEl = doc.selectFirst("div#resumo, div.resumo, .resumo-cv, #mini-bio, [data-name='Resumo']");
+        // buscatextual.cnpq.br/visualizacv.do uses <p class="resumo"> inside a div.title-wrapper
+        Element resumoEl = doc.selectFirst("p.resumo, div#resumo, div.resumo, .resumo-cv, #mini-bio, [data-name='Resumo']");
         if (resumoEl != null) {
             curriculo.setResumo(resumoEl.text().trim());
             return;
@@ -166,7 +190,7 @@ public class LattesScraperService {
         if (section == null) return;
 
         List<AreaAtuacao> areas = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, li, .dados-producao")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, li, .dados-producao")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             AreaAtuacao area = new AreaAtuacao();
@@ -197,7 +221,7 @@ public class LattesScraperService {
         if (section == null) return;
 
         List<Idioma> idiomas = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, li, .dados-producao")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, li, .dados-producao")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             Idioma idioma = new Idioma();
@@ -220,10 +244,12 @@ public class LattesScraperService {
     private void extractFormacao(Document doc, Curriculo curriculo) {
         Element section = findSectionByTitle(doc, "Formação acadêmica");
         if (section == null) section = findSectionByTitle(doc, "Formacao academica");
+        if (section == null) section = findSectionByTitle(doc, "Formação acadêmica/Titulação");
+        if (section == null) section = findSectionByTitle(doc, "Formação acadêmica e titulação");
         if (section == null) return;
 
         List<FormacaoAcademica> formacoes = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, .dados-producao, li")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, .dados-producao, li")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             FormacaoAcademica f = parseFormacao(text);
@@ -269,10 +295,11 @@ public class LattesScraperService {
         Element section = findSectionByTitle(doc, "Atuação Profissional");
         if (section == null) section = findSectionByTitle(doc, "Atuacao Profissional");
         if (section == null) section = findSectionByTitle(doc, "Vínculos empregatícios");
+        if (section == null) section = findSectionByTitle(doc, "Atividades profissionais");
         if (section == null) return;
 
         List<AtuacaoProfissional> atuacoes = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, .dados-producao, li")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, .dados-producao, li")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             AtuacaoProfissional a = new AtuacaoProfissional();
@@ -302,6 +329,7 @@ public class LattesScraperService {
     private void extractArtigos(Document doc, Curriculo curriculo) {
         Element section = findSectionByTitle(doc, "Artigos completos publicados em periódicos");
         if (section == null) section = findSectionByTitle(doc, "Artigos publicados");
+        if (section == null) section = findSectionByTitle(doc, "Artigos completos publicados");
         if (section == null) return;
 
         curriculo.setArtigosPublicados(extractPublicacoes(section, "ARTIGO"));
@@ -339,12 +367,28 @@ public class LattesScraperService {
         // Prefer structured containers; avoid mixing parent and child selectors to prevent duplicates.
         // .cita-artigo is used by buscatextual.cnpq.br/visualizacv.do; .layout-cell-02 holds the
         // human-readable citation text inside each .cita-artigo.
+        // layout-cell-9 / layout-cell-pad-5 is used in the standard visualizacv.do page for all sections.
         Elements citaItems = section.select(".cita-artigo");
         if (!citaItems.isEmpty()) {
             for (Element item : citaItems) {
                 // Prefer the content column (.layout-cell-02) for cleaner text; fall back to full item text
                 Element contentEl = item.selectFirst(".layout-cell-02, .layout-cell-pad-02");
                 String text = (contentEl != null ? contentEl : item).text().trim();
+                if (text.isEmpty()) continue;
+                Publicacao p = new Publicacao();
+                p.setTipo(tipo);
+                p.setTitulo(text);
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{4})").matcher(text);
+                if (m.find()) p.setAno(m.group(1));
+                publicacoes.add(p);
+            }
+            return publicacoes;
+        }
+        // layout-cell-9 structure: standard on buscatextual.cnpq.br/visualizacv.do
+        Elements layoutItems = section.select("div.layout-cell-9 .layout-cell-pad-5");
+        if (!layoutItems.isEmpty()) {
+            for (Element item : layoutItems) {
+                String text = item.text().trim();
                 if (text.isEmpty()) continue;
                 Publicacao p = new Publicacao();
                 p.setTipo(tipo);
@@ -389,7 +433,7 @@ public class LattesScraperService {
         if (section == null) return;
 
         List<ProjetoPesquisa> projetos = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, .dados-producao, li")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, .dados-producao, li")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             ProjetoPesquisa p = new ProjetoPesquisa();
@@ -418,10 +462,12 @@ public class LattesScraperService {
     private void extractOrientacoes(Document doc, Curriculo curriculo) {
         Element section = findSectionByTitle(doc, "Orientações");
         if (section == null) section = findSectionByTitle(doc, "Orientacoes");
+        if (section == null) section = findSectionByTitle(doc, "Orientações concluídas");
+        if (section == null) section = findSectionByTitle(doc, "Orientações em andamento");
         if (section == null) return;
 
         List<Orientacao> orientacoes = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, .dados-producao, li")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, .dados-producao, li")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             Orientacao o = new Orientacao();
@@ -456,7 +502,7 @@ public class LattesScraperService {
         if (section == null) return;
 
         List<Premio> premios = new ArrayList<>();
-        for (Element item : section.select(".informacoes-producao, .dados-producao, li")) {
+        for (Element item : section.select("div.layout-cell-9 .layout-cell-pad-5, .informacoes-producao, .dados-producao, li")) {
             String text = item.text().trim();
             if (text.isEmpty()) continue;
             Premio p = new Premio();
@@ -483,51 +529,79 @@ public class LattesScraperService {
 
     /**
      * Finds the nearest content block for a Lattes HTML section header.
-     * <p>
-     * Handles two page structures:
-     * <ul>
-     *   <li><b>buscatextual.cnpq.br/visualizacv.do</b> — section titles are in {@code <b>} tags
-     *       inside the same {@code <div>} that contains the {@code <ol>} items.</li>
-     *   <li><b>lattes.cnpq.br</b> public-profile pages — section titles are in
-     *       {@code <div class="title">} / {@code <span class="title">} elements whose next sibling
-     *       is the content container.</li>
-     * </ul>
+     *
+     * <p>Strategy 1 (primary — buscatextual.cnpq.br/visualizacv.do):
+     * Each section is a {@code div.title-wrapper} whose {@code <h1>} text matches the title.
+     * Returns the whole {@code div.title-wrapper} so callers can query items inside it.
+     *
+     * <p>Strategy 2 (generic fallback): walks common heading elements, then tries to return
+     * the closest {@code div.title-wrapper} ancestor.
+     *
+     * <p>Strategy 3 (last resort): scans all elements' own text.
      */
     private Element findSectionByTitle(Document doc, String sectionTitle) {
-        // Strategy 1: look for any element whose text exactly/partially matches the title.
-        // h1 is added here because buscatextual.cnpq.br/visualizacv.do wraps each section
-        // title in an <h1> tag inside a div that also holds the content items.
-        // <b> handles the older visualizacv.do layout which uses <b>Section Name</b>.
-        for (Element el : doc.select("h1, span.title, div.title, b, h2, h3, h4, dt, .group-title")) {
-            if (el.text().trim().equalsIgnoreCase(sectionTitle)
-                    || el.text().trim().toLowerCase().contains(sectionTitle.toLowerCase())) {
+        String titleLower = normalizeText(sectionTitle);
+
+        // Strategy 1: div.title-wrapper > a[name] > h1 — standard structure on visualizacv.do
+        for (Element titleWrapper : doc.select("div.title-wrapper")) {
+            Element h1 = titleWrapper.selectFirst("h1");
+            if (h1 == null) continue;
+            String h1Text = normalizeText(h1.text());
+            if (!h1Text.isEmpty() && (h1Text.equals(titleLower) || h1Text.contains(titleLower))) {
+                log.info("[SCRAPER] findSectionByTitle('{}') — Strategy 1 [div.title-wrapper, h1='{}']: found",
+                        sectionTitle, h1.text().trim());
+                return titleWrapper;
+            }
+        }
+
+        // Strategy 2: any heading element anywhere — walk up to title-wrapper if possible
+        for (Element el : doc.select("h1, h2, h3, h4, span.title, div.title, b, dt, .group-title")) {
+            String elText = normalizeText(el.text());
+            if (!elText.isEmpty() && (elText.equals(titleLower) || elText.contains(titleLower))) {
+                log.info("[SCRAPER] findSectionByTitle('{}') — Strategy 2 [tag={}]: '{}'",
+                        sectionTitle, el.tagName(), el.text().trim());
+                Element tw = el.closest("div.title-wrapper");
+                if (tw != null) return tw;
                 Element parent = el.parent();
                 if (parent != null) {
-                    // If the parent div directly contains content items the header element belongs
-                    // to the same container as the data (visualizacv.do layout); return the parent.
-                    if (!parent.select("li, .informacoes-producao, .dados-producao, .cita-artigo").isEmpty()) {
-                        return parent;
-                    }
-                    // Otherwise the header is in a separate block; look for the next sibling
-                    // that holds the actual content.
                     Element next = parent.nextElementSibling();
-                    if (next != null && !next.select("li, .informacoes-producao, .dados-producao, .cita-artigo").isEmpty()) {
-                        return next;
-                    }
-                    // Fall back to next sibling or parent so raw-text fallbacks in callers can still run
                     if (next != null) return next;
                     return parent;
                 }
                 return el;
             }
         }
-        // Strategy 2: look for a section by its id derived from normalized title
-        String normalized = sectionTitle.toLowerCase()
-                .replaceAll("[^a-z0-9]", "-")
-                .replaceAll("-+", "-");
-        Element byId = doc.getElementById(normalized);
-        if (byId != null) return byId;
 
+        // Strategy 3: ownText scan — catches any tag type
+        for (Element el : doc.getAllElements()) {
+            String own = normalizeText(el.ownText());
+            if (!own.isEmpty() && (own.equals(titleLower) || own.contains(titleLower))) {
+                log.info("[SCRAPER] findSectionByTitle('{}') — Strategy 3 ownText [tag={}, class={}]: '{}'",
+                        sectionTitle, el.tagName(), el.className());
+                Element tw = el.closest("div.title-wrapper");
+                if (tw != null) return tw;
+                Element parent = el.parent();
+                if (parent != null) {
+                    Element next = parent.nextElementSibling();
+                    if (next != null) return next;
+                    return parent;
+                }
+                return el;
+            }
+        }
+
+        log.warn("[SCRAPER] findSectionByTitle('{}') — NOT FOUND in page", sectionTitle);
         return null;
+    }
+
+    /** Lower-cases text and replaces non-breaking spaces / extra whitespace for robust comparison. */
+    private static String normalizeText(String text) {
+        if (text == null) return "";
+        return text.trim()
+                .replace('\u00A0', ' ')   // non-breaking space → regular space
+                .replace('\u2007', ' ')   // figure space
+                .replace('\u202F', ' ')   // narrow no-break space
+                .replaceAll("\\s+", " ")  // collapse multiple spaces
+                .toLowerCase();
     }
 }
